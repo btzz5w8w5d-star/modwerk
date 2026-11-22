@@ -535,6 +535,41 @@
     "1: jmp 0x4009fb5e"
    ],
    "done": null
+  },
+  {
+   "site": "0x400a43a0",
+   "length": 6,
+   "guard": "465c4cc4b04b3b3daaf8e8167db2ed324b77d0685bb6d78bd364a79b427cb18f",
+   "routine": "At the stock scheduling wrap before tracks are re-homed.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x400a43a6"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x400a2d5a",
+   "length": 6,
+   "guard": "c30702082745c07aef02c7bbbd9698d1c0e9802ec1c18df9f2d2f2f40a61e894",
+   "routine": "Before the stock audio event builder. Only the low byte of bank_word identifies its bank. d0 is overwritten by the next stock instruction.",
+   "head": [
+    "mvs.b %d3,%d0"
+   ],
+   "tail": [
+    "cmpi.l #7,%d5",
+    "bhi 1f",
+    "cmpi.l #15,%d0",
+    "bls 2f",
+    "1: mvs.b %d3,%d0",
+    "2:",
+    "move.l %d0,%d3",
+    "move.l %d3,78(%sp)",
+    "jmp 0x400a2d60"
+   ],
+   "done": null
   }
  ],
  "events": [
@@ -2464,6 +2499,60 @@
    "raisers": [],
    "raisedByBase": true,
    "orderEvidence": "Each subscriber keeps its own copy of the deadline; none reads another's. Owner approved 22 November 2026 for Tape Echo and every ColdFire effect after it."
+  },
+  {
+   "event": "ev_seq_wrap",
+   "index": 63,
+   "site": "0x400a43a0",
+   "length": 6,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "At the stock scheduling wrap before tracks are re-homed.",
+   "context": "Sequencer task, bounded operations only.",
+   "contract": "Before stock re-homes tracks, commit pending module-owned state. Bounded, no blocking, allocation, retained pointers or changes to transport. Preserve EMAC and C callee-saved registers.",
+   "order": "Ascending, then module id.",
+   "room": 8,
+   "subscribers": [],
+   "orderEvidence": "Observers commit only their own state before source selection."
+  },
+  {
+   "event": "ev_audio_seq_source",
+   "index": 64,
+   "site": "0x400a2d5a",
+   "length": 6,
+   "prototype": "void f(int *pattern, unsigned track, unsigned bank_word)",
+   "args": [
+    "&d0",
+    "d5",
+    "site+80"
+   ],
+   "results": "notify",
+   "when": "Before the stock audio event builder. Only the low byte of bank_word identifies its bank. d0 is overwritten by the next stock instruction.",
+   "context": "Sequencer task, bounded operations only.",
+   "contract": "The exclusive owner may replace the callback-local pattern with 0..15 on ordinary tracks 0..7. Inspect the low byte of bank_word. Leave the pattern unchanged to defer to stock. Never retain the pointer. The base ignores out-of-range proposals and preserves stock for other lanes. Keep the EMAC and C callee-saved registers.",
+   "order": "Ascending, then module id.",
+   "room": 1,
+   "subscribers": [],
+   "orderEvidence": "Room one: the loader rejects a competing selector before publication."
+  },
+  {
+   "event": "ot_modal_input",
+   "index": 65,
+   "kind": "table",
+   "site": null,
+   "sites": [],
+   "length": 0,
+   "record": 4,
+   "key": null,
+   "room": 1,
+   "declaration": "struct modwerk_modal_input { uint32_t abi; };\n#define MODWERK_MODAL_INPUT_ABI 1u\n#define MODWERK_SEQ_PANEL_FEATURE 0x4000u",
+   "when": "Before stock panel shortcuts, on a key edge or encoder delta.",
+   "context": "UI task; bounded, no allocation or retained addresses.",
+   "contract": "Contribute ABI 1 to opt in. The base offers the active owner's ordinary key/encoder handlers a tagged control (0x100). Return zero to pass it. Key 64 tagged, with value zero, queries modal ownership without an edge. Consumed presses have their matching release swallowed even across unload. ABI 9 packages requiring both sequencer callbacks and modal input set MODWERK_SEQ_PANEL_FEATURE. Admission verifies the complete binding set before allocation.",
+   "order": "One modal input owner. A competing contributor is refused.",
+   "subscribers": [],
+   "orderEvidence": "A single owner prevents competing modal interceptors."
   }
  ]
 }

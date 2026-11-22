@@ -1,0 +1,1 @@
+Octatrack development base proposal for #1997. A performance module can queue one track's pattern source on the stock sequencer boundary and declare modal panel input. Emulator candidate for #1910 review.

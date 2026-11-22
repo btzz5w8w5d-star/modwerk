@@ -1136,6 +1136,61 @@ modwerk_site_4009fb58:
         jmp 0x4009fb80
         1: jmp 0x4009fb5e
 
+| ---- 0x400a2d5a: ev_audio_seq_source
+        .globl  modwerk_site_400a2d5a
+modwerk_site_400a2d5a:
+        mvs.b %d3,%d0
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_audio_seq_source: void f(int *pattern, unsigned track, unsigned bank_word)
+        movea.l modwerk_runtime_event_row+240,%a2
+.L400a2d5a_ev_audio_seq_source:
+        move.l  (%a2)+,%d0
+        beq     .L400a2d5a_ev_audio_seq_source_end
+        move.l  100(%sp),-(%sp)
+        move.l  %d5,-(%sp)
+        pea     8(%sp)
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     12(%sp),%sp
+        bra     .L400a2d5a_ev_audio_seq_source
+.L400a2d5a_ev_audio_seq_source_end:
+.L400a2d5a_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        cmpi.l #7,%d5
+        bhi 1f
+        cmpi.l #15,%d0
+        bls 2f
+        1: mvs.b %d3,%d0
+        2:
+        move.l %d0,%d3
+        move.l %d3,78(%sp)
+        jmp 0x400a2d60
+
+| ---- 0x400a43a0: ev_seq_wrap
+        .globl  modwerk_site_400a43a0
+modwerk_site_400a43a0:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_seq_wrap: void f(void)
+        movea.l modwerk_runtime_event_row+236,%a2
+.L400a43a0_ev_seq_wrap:
+        move.l  (%a2)+,%d0
+        beq     .L400a43a0_ev_seq_wrap_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L400a43a0_ev_seq_wrap
+.L400a43a0_ev_seq_wrap_end:
+.L400a43a0_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_400a43a0_6
+modwerk_stock_400a43a0_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x400a43a6
+
 | ---- raised (by a module, or by the base): ev_mute_keep: unsigned f(void); every handler runs, the answers OR'd
         .globl  modwerk_raise_ev_mute_keep
 modwerk_raise_ev_mute_keep:

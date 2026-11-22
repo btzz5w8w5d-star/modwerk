@@ -462,6 +462,10 @@ static void missing_check(void)
     }
     if (open == MISSING && !missing_shown && !missing_asked && !on_count) open = CLOSED;
     if (missing_top + MISSING_ROWS > n) missing_top = n > MISSING_ROWS ? n - MISSING_ROWS : 0;
+#ifdef MODWERK_RUNTIME_EVENTS
+    extern int modwerk_modal_panel_owned(void);
+    if (!modwerk_modal_panel_owned())
+#endif
     if ((fx_any(fx_less(handles, missing_told)) || (machines_now & ~machines_told)) && fx_same(handles, missing_last) &&
         machines_now == machines_last && open == CLOSED && transfer == T_NONE && modwerk_modset_restored() && modwerk_modset_result)
         open = MISSING, missing_top = 0, missing_asked = 0, missing_told = handles, machines_told = machines_now;
