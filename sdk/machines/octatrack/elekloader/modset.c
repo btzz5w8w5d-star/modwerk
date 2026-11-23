@@ -647,6 +647,14 @@ void modwerk_modset_guard_test(unsigned blame)
  * Off: the loader unloads the module as a host's removal would (refused while a track runs it), its package goes
  * from the set to the shelf. On: the loader installs the shelved package as the restore installs one, and it joins
  * the set again. Either way the set is saved as after any change, and a refusal leaves everything as it was. */
+#if defined(MODWERK_RUNTIME_EVENTS) && defined(__m68k__)
+static uint32_t collect_after;
+static unsigned collect_left;
+static int collect_due(void)
+{
+    return collect_left && (int32_t)(TICKS - collect_after) >= 0 && STOPPED();
+}
+#endif
 static volatile uint32_t switch_id;
 static volatile uint8_t switch_on, switch_asked;
 volatile uint32_t modwerk_modset_switch_result; /* status.h's MODSET_SWITCH codes, for the page */
@@ -702,6 +710,12 @@ static uint32_t switch_now(uint32_t id, int on)
         seal(count - 1u, n - step);
     }
     notice = 0, pending = 1, retry_at = 0;
+#if defined(MODWERK_RUNTIME_EVENTS) && defined(__m68k__)
+    if (!on) {
+        collect_after = TICKS + 3u;
+        collect_left = 2;
+    }
+#endif
     return MODSET_SWITCHED;
 }
 /* The shelf for status.c's page and for a host (ep0.c's OFF request): "MWO", the entries here, the shelf's count
@@ -745,7 +759,13 @@ int modwerk_modset_restored(void) { return (int)restored; }
 int mw_sample_storage_ready(void) { return restored && !pending && !JOURNAL_BLOCKED(); }
 #endif
 /* ep0.c's tick wakes the engine for this: a kept set not yet on the card whose save may run now (first try or retry). */
-int modwerk_modset_due(void) { return restored && pending && TICKS >= retry_at && !VOLATILE_BLOCKED(); }
+int modwerk_modset_due(void)
+{
+#if defined(MODWERK_RUNTIME_EVENTS) && defined(__m68k__)
+    if (collect_due() && !VOLATILE_BLOCKED()) return 1;
+#endif
+    return restored && pending && TICKS >= retry_at && !VOLATILE_BLOCKED();
+}
 #ifdef MODWERK_SAVED_SET_EXPORT
 /* A restored baseline without a staged package or any queued/retrying save. */
 int modwerk_modset_export_idle(void) { return restored && !pending && !candidate && !VOLATILE_BLOCKED(); }
@@ -780,6 +800,14 @@ void modwerk_modset_service(void)
             modwerk_sample_memory_service();
             (void)((unsigned (*)(void))(uintptr_t)modwerk_raise_ev_modules_ready)();
         }
+    }
+#endif
+#if defined(MODWERK_RUNTIME_EVENTS) && defined(__m68k__)
+    if (collect_due()) {
+        extern void modwerk_runtime_collect_idle(void);
+        --collect_left;
+        collect_after = TICKS + 12u;
+        modwerk_runtime_collect_idle();
     }
 #endif
     if (!pending || TICKS < retry_at) return;

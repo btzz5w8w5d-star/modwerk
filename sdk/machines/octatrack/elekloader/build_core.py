@@ -2273,6 +2273,9 @@ modwerk_retained_end:
     # The machine-neutral loader's events (sdk/runtime/loader/loader.h), from core-ot's bus.
     recipe.setdefault('subscribe', []).extend(dict(event='ev_' + e, fn='modwerk_runtime_' + e, order=90)
                                               for e in ('tick', 'draw', 'key', 'enc'))
+    if args.site_events:
+        recipe['subscribe'] += [dict(event='ev_key', fn='modwerk_modal_key', order=10),
+                                dict(event='ev_enc', fn='modwerk_modal_enc', order=10)]
     if args.sample_editor:
         recipe['cflags'].append('-DMODWERK_SAMPLE_EDITOR')
         recipe['sources'].append('sample_editor_hooks.s')
