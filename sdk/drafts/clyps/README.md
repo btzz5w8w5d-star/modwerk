@@ -1,5 +1,11 @@
 # CLYPS — experimental Octatrack performance module (community draft)
 
+## Qualification update · 25 November 2026
+
+The [maintainer's MKII trial](https://github.com/repeat98/modwerk/pull/1997#issuecomment-7137293119) covers module 6b78afac9 on the RAM-booted contributor base 5c32cbacd (OS 1.40C). In this draft, open ARR before accessing the source list. Outside ARR, SRC and LEVEL operate the stock page even when the A01 row is drawn. The maintainer observed the 8×4 matrix, a T1 source change and return, STOP cancellation and clean rollback. The project contained trigs on T1 only. Listening, MAIN/CUE recording, the other seven lanes, coexistence and power-cycle recovery remain open.
+
+The official procedure stopped at step 1 on the missing staged manifest. Shared wrap, source-selector and modal-input services await maintainer decision. [Testing records](TESTING.md) retain the build-specific emulator, host and local admission results. The earlier handoff and interface descriptions document the tested candidate. The next development sprint requires separate artist authorization.
+
 [Authoritative Bank and copy/paste requirements](../../../docs/CLYPS_BANKS_COPY_PASTE_REQUIREMENTS.md) · artist decision, 23 November 2026.
 
 **Build the eight-track engine.** From the repository root run:

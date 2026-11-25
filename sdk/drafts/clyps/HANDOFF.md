@@ -1,3 +1,5 @@
+**Latest physical evidence:** [MKII trial, operating instructions and qualification limits](README.md#qualification-update--25-november-2026). Earlier status labels below refer to their own checkpoints.
+
 ## Current integration checkpoint · 23 November 2026
 
 **DRAFT / NOT_FLASH_CANDIDATE / HARDWARE NOT TESTED.** Use the contributor
