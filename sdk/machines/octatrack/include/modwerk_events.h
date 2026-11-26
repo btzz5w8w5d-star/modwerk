@@ -353,4 +353,18 @@ typedef void modwerk_ev_audio_frame_prepare(void);
 #define MODWERK_EV_FRAME_DEADLINE 62
 typedef unsigned modwerk_ev_frame_deadline(uint32_t deadline, unsigned rest);
 
+/* ev_seq_wrap (0x400a43a0): At the stock scheduling wrap before tracks are re-homed.. Sequencer task, bounded operations only.. Before stock re-homes tracks, commit pending module-owned state. Bounded, no blocking, allocation, retained pointers or changes to transport. Preserve EMAC and C callee-saved registers. */
+#define MODWERK_EV_SEQ_WRAP 63
+typedef void modwerk_ev_seq_wrap(void);
+
+/* ev_audio_seq_source (0x400a2d5a): Before the stock audio event builder. Only the low byte of bank_word identifies its bank. d0 is overwritten by the next stock instruction.. Sequencer task, bounded operations only.. The exclusive owner may replace the callback-local pattern with 0..15 on ordinary tracks 0..7. Inspect the low byte of bank_word. Leave the pattern unchanged to defer to stock. Never retain the pointer. The base ignores out-of-range proposals and preserves stock for other lanes. Keep the EMAC and C callee-saved registers. */
+#define MODWERK_EV_AUDIO_SEQ_SOURCE 64
+typedef void modwerk_ev_audio_seq_source(int *pattern, unsigned track, unsigned bank_word);
+
+/* ot_modal_input (table, contribute {"to": "ot_modal_input", "order", "data"}): Before stock panel shortcuts, on a key edge or encoder delta.. UI task; bounded, no allocation or retained addresses.. Contribute ABI 1 to opt in. The base offers the active owner's ordinary key/encoder handlers a tagged control (0x100). Return zero to pass it. Key 64 tagged, with value zero, queries modal ownership without an edge. Consumed presses have their matching release swallowed even across unload. ABI 9 packages requiring both sequencer callbacks and modal input set MODWERK_SEQ_PANEL_FEATURE. Admission verifies the complete binding set before allocation. */
+#define MODWERK_OT_MODAL_INPUT 65
+struct modwerk_modal_input { uint32_t abi; };
+#define MODWERK_MODAL_INPUT_ABI 1u
+#define MODWERK_SEQ_PANEL_FEATURE 0x4000u
+
 #endif

@@ -336,6 +336,25 @@
    "index": 62,
    "event": "ev_frame_deadline",
    "kind": "raise"
+  },
+  {
+   "index": 63,
+   "event": "ev_seq_wrap",
+   "kind": "call",
+   "room": 8
+  },
+  {
+   "index": 64,
+   "event": "ev_audio_seq_source",
+   "kind": "call",
+   "room": 1
+  },
+  {
+   "index": 65,
+   "event": "ot_modal_input",
+   "kind": "table",
+   "room": 1,
+   "record": 4
   }
  ]
 }

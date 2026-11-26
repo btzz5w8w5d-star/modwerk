@@ -539,6 +539,14 @@ static void reclaim(const struct runtime_context *context)
     }
     modwerk_machine_unlock(lock);
 }
+#if defined(MODWERK_RUNTIME_EVENTS) && defined(__m68k__)
+/* Revisit retired extents from a fresh engine-task context after stopped OFF. */
+static void __attribute__((used)) collect_idle_context(const struct runtime_context *context)
+{
+    reclaim(context);
+}
+RUNTIME_CONTEXT_WRAPPER(modwerk_runtime_collect_idle, collect_idle_context, "", 68);
+#endif
 /* A word holding an offset into the module becomes an address. */
 static int relocate(uint8_t *word, uint32_t end, uint32_t base)
 {

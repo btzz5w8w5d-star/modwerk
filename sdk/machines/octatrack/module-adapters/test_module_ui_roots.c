@@ -120,6 +120,26 @@ int main(void)
     ordinary(&next, image);
     CHECK(modwerk_machine_metadata_admit(&live, &next, 0, RUNTIME_METADATA_SWITCH) == RUNTIME_OK);
     CHECK(next.foreign_roots == 1);
+    /* Paired capability, checked before the loader allocates an extent. */
+    ordinary(&next, other);
+    next.requires = MODWERK_SEQ_PANEL_FEATURE;
+    CHECK(modwerk_machine_metadata_admit(&none, &next, 0, RUNTIME_METADATA_PREPARE) == RUNTIME_CONFLICT);
+    next.hook_offset[MODWERK_EV_BANK_LOAD] = 0;
+    next.hook_offset[MODWERK_EV_SEQ_WRAP] = 2;
+    next.hook_offset[MODWERK_EV_AUDIO_SEQ_SOURCE] = 4;
+    next.hook_offset[MODWERK_OT_MODAL_INPUT] = sizeof other - 4;
+    next.hook_offset[RUNTIME_KEY] = 6;
+    next.hook_offset[RUNTIME_ENC] = 8;
+    word(other + sizeof other - 4, MODWERK_MODAL_INPUT_ABI);
+    CHECK(modwerk_machine_metadata_admit(&none, &next, 0, RUNTIME_METADATA_PREPARE) == RUNTIME_OK);
+    next.hook_offset[MODWERK_EV_SEQ_WRAP] = RUNTIME_NONE;
+    CHECK(modwerk_machine_metadata_admit(&none, &next, 0, RUNTIME_METADATA_PREPARE) == RUNTIME_CONFLICT);
+    next.hook_offset[MODWERK_EV_SEQ_WRAP] = 2;
+    next.hook_offset[MODWERK_OT_MODAL_INPUT] += 2;
+    CHECK(modwerk_machine_metadata_admit(&none, &next, 0, RUNTIME_METADATA_PREPARE) == RUNTIME_MALFORMED);
+    next.hook_offset[MODWERK_OT_MODAL_INPUT] -= 2;
+    word(other + sizeof other - 4, 2);
+    CHECK(modwerk_machine_metadata_admit(&none, &next, 0, RUNTIME_METADATA_PREPARE) == RUNTIME_MALFORMED);
     if (failures) return 1;
     puts("Module UI roots: removal, replacement and Undo refused while a window or key layer names the module; foreign roots for every package.");
     return 0;

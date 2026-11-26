@@ -347,12 +347,75 @@ void modwerk_runtime_draw(unsigned char *frame)
     while ((f = modwerk_runtime_next_hook(RUNTIME_DRAW, &next)))
         ((void (*)(unsigned char *))f)(frame);
 }
+#ifdef MODWERK_RUNTIME_EVENTS
+#include "modwerk_events.h"
+static int modal_owner(const struct runtime_module *module)
+{
+    const struct modwerk_modal_input *row = (const void *)module->hook[MODWERK_OT_MODAL_INPUT];
+    return row && row->abi == MODWERK_MODAL_INPUT_ABI;
+}
+/* The table owner gets first refusal only for input it already owns. Unclaimed
+ * events continue through the base shortcuts and normal runtime dispatch.
+ * Look up the active slot on every event so removal needs no unregister. */
+static int modal_panel_input(enum runtime_event event, int control, int value)
+{
+    unsigned next = 0;
+    uintptr_t handler;
+    if (!modwerk_runtime_event_row[MODWERK_OT_MODAL_INPUT - RUNTIME_EVENTS][0]) return 0;
+    while ((handler = modwerk_runtime_next_hook(event, &next))) {
+        const struct runtime_module *owner = modwerk_runtime_module(next - 1u);
+        if (owner && owner->hook[event] == handler && modal_owner(owner))
+            return ((int (*)(int, int))handler)(control | 0x100, value);
+    }
+    return 0;
+}
+/* Reserved query, outside the physical 0..63 key range. Only the active
+ * modal panel owner sees it. Asking never synthesizes a physical edge. */
+int modwerk_modal_panel_owned(void)
+{
+    return modal_panel_input(RUNTIME_KEY, 64, 0);
+}
+
+static uint32_t modal_down[2];
+static void modal_remember(int code)
+{
+    if ((unsigned)code < 64)
+        modal_down[(unsigned)code >> 5] |= 1u << (code & 31);
+}
+
+int modwerk_modal_key(int code, int pressed)
+{
+    int taken = modal_panel_input(RUNTIME_KEY, code, pressed);
+    if ((unsigned)code < 64) {
+        uint32_t bit = 1u << (code & 31);
+        uint32_t *held = &modal_down[(unsigned)code >> 5];
+        if (!pressed) {
+            taken |= !!(*held & bit);
+            *held &= ~bit;
+        } else if (taken) modal_remember(code);
+        else if (*held & bit) taken = 1;
+    }
+    return taken;
+}
+int modwerk_modal_enc(int encoder, int delta)
+{
+    return modal_panel_input(RUNTIME_ENC, encoder, delta);
+}
+#endif
+
 int modwerk_runtime_key(int code, int pressed)
 {
     unsigned next = 0;
     uintptr_t f;
-    while ((f = modwerk_runtime_next_hook(RUNTIME_KEY, &next)))
-        if (((int (*)(int, int))f)(code, pressed)) return 1;
+    while ((f = modwerk_runtime_next_hook(RUNTIME_KEY, &next))) {
+        if (((int (*)(int, int))f)(code, pressed)) {
+#ifdef MODWERK_RUNTIME_EVENTS
+            const struct runtime_module *owner = modwerk_runtime_module(next - 1u);
+            if (pressed && owner && modal_owner(owner)) modal_remember(code);
+#endif
+            return 1;
+        }
+    }
     return 0;
 }
 int modwerk_runtime_enc(int encoder, int delta)
