@@ -1,1 +1,1 @@
-Octatrack development base proposal for #1997. A performance module can queue one track's pattern source on the stock sequencer boundary and declare modal panel input. Emulator candidate for #1910 review.
+Octatrack base: performance modules can commit their state at the sequencer wrap, choose one track's pattern source at the stock boundary, and own the panel while their view is open. No module uses them in a release yet (CLYPS draft #1997).
